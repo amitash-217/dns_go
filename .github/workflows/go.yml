@@ -27,7 +27,7 @@ jobs:
     - name: Archive dns go executables
       uses: actions/upload-artifact@v4
       with:
-        name: dns
+        name: dns_linux
         path: |
           dns.out
 
@@ -50,6 +50,6 @@ jobs:
     - name: Archive dns go executables
       uses: actions/upload-artifact@v4
       with:
-        name: dns
+        name: dns_win
         path: |
           dns.exe
