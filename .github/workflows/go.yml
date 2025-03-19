@@ -8,8 +8,11 @@ on:
 
 jobs:
 
-  build_linux:
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [linux, windows]
     steps:
     - uses: actions/checkout@v4
 
@@ -18,38 +21,27 @@ jobs:
       with:
         go-version: '1.24.1'
 
-    - name: Build executable for linux
-      shell: bash
-      env:
-        DOMAIN_NAME: ${{ secrets.domainName }}
-      run: go build -ldflags "-X main.domainName=$DOMAIN_NAME" -o dns.out
+    - name: Install dependencies
+      run: go mod tidy
 
-    - name: Archive dns go executables
+    - name: Build Go executable
+      run: |
+        GOOS=${{ matrix.os }} GOARCH=amd64 go build -ldflags "-X main.domainName=${{ secrets.DOMAINNAME }}" -o dns-${{ matrix.os }}-amd64
+
+    - name: Rename executable (if Windows)
+      if: matrix.os == 'windows'
+      run: mv dns-windows-amd64 dns-windows-amd64.exe
+
+    - name: Upload Windows executable (if Windows)
+      if: matrix.os == 'windows'
       uses: actions/upload-artifact@v4
       with:
-        name: dns_linux
-        path: |
-          dns.out
+        name: dns-windows
+        path: dns-windows-amd64.exe
 
-  build_windows:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.24.1'
-
-    - name: Build executable for windows
-      shell: pwsh
-      env:
-        DOMAIN_NAME: ${{ secrets.domainName }}
-      run: go build -ldflags "-X main.domainName=$env:DOMAIN_NAME" -o dns.exe
-
-    - name: Archive dns go executables
+    - name: Upload Linux executable (if Linux)
+      if: matrix.os == 'linux'
       uses: actions/upload-artifact@v4
       with:
-        name: dns_win
-        path: |
-          dns.exe
+        name: dns-linux
+        path: dns-linux-amd64
