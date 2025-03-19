@@ -8,7 +8,7 @@ on:
 
 jobs:
 
-  build:
+  build_linux:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -18,7 +18,7 @@ jobs:
       with:
         go-version: '1.24.1'
 
-    - name: Build executable
+    - name: Build executable for linux
       shell: bash
       env:
         DOMAIN_NAME: ${{ secrets.domainName }}
@@ -30,3 +30,26 @@ jobs:
         name: dns
         path: |
           dns.out
+
+  build_windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24.1'
+
+    - name: Build executable for windows
+      shell: pwsh
+      env:
+        DOMAIN_NAME: ${{ secrets.domainName }}
+      run: go build -ldflags "-X main.domainName=$env:DOMAIN_NAME" -o dns.exe
+
+    - name: Archive dns go executables
+      uses: actions/upload-artifact@v4
+      with:
+        name: dns
+        path: |
+          dns.exe
